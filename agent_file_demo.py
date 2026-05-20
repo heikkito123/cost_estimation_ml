@@ -63,6 +63,8 @@ def read_file(ctx: RunContextWrapper[Any], file_path: str) -> str:
     return target.read_text(encoding="utf-8", errors="replace")
 
 @function_tool
+# TODO: note to self, do NOT mindlessly push full excel files to llm-api, it will cost an
+# arm and a leg.
 def read_excel_file(ctx: RunContextWrapper[Any], file_path:str) -> str:
     """
     Read an Excel file from the project directory and return its contents as a string.
