@@ -2,6 +2,15 @@
 
 Demoing cost estimation ml-model and reflecting different use cases and different perspectives and tools on construction project data. Core problem is inconsistent and unstandardized way of writing documentation for projects in general.
 
+WIP:
+Currently exploring local llm options for larger text-file parsing and summarization. Biggest problem to tackle is the small context window vs. large text file contents. Bouncing between trying to parse files via fixed engine and just piping the whole (initially parsed) file to a local sub-agent for parsing, and creating a tooling architecture that exposes only key data to a frontier level paid API. Interesting options not yet implemented e.g.
+
+- data embeddings and semantic search, colpali / byaldi recommended, VLM (visual language model)
+- smaller dataset exposition to a paid frontier level LLM API
+- routing large datasets to small context windows
+
+---
+
 Current interesting points:
 - Simple model to estimate costs based on certain features, mainly regression models
 - LLM-api assistent exposed to project data (unstructured data at the moment)
