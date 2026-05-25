@@ -1,32 +1,43 @@
 import asyncio
 from pathlib import Path
 from typing import Any
+from dataclasses import dataclass
 
 import pandas as pd
 
 from agents import Agent, Runner, RunContextWrapper, function_tool
 
-PROJECT_ROOT = Path(__file__).resolve().parent / "projektit"
+"""
+General testing on openAI agents SDK.
 
-def safe_path(relative_path: str) -> Path:
+Not really viable on small company context, technical and financial intercept
+is fair when tools are refined though.
+"""
+
+@dataclass
+class ProjectContext:
+    project_root: Path
+
+def safe_path(base_path, relative_path: str) -> Path:
     """
     Resolve a path inside PROJECT_ROOT to prevent escaping with ../../ tricks
     """
-    full_path = (PROJECT_ROOT / relative_path).resolve()
-    if PROJECT_ROOT.resolve() not in full_path.parents and full_path != PROJECT_ROOT.resolve():
+    full_path = (base_path / relative_path).resolve()
+    if base_path.resolve() not in full_path.parents and full_path != base_path.resolve():
         raise ValueError("Access outside of project root is not allowed.")
     
     return full_path
 
 @function_tool
-def list_files(ctx: RunContextWrapper[Any], directory: str = ".") -> str:
+def list_files(ctx: RunContextWrapper[ProjectContext], directory: str = ".") -> str:
     """
     List file in a project directory
     
     Args:
         directory: Directory inside the project folder to list.
     """
-    target = safe_path(directory)
+    base_path = ctx.context.project_root
+    target = safe_path(base_path, directory)
 
     if not target.exists():
         return f"Directory '{directory}' does not exist."
@@ -38,20 +49,21 @@ def list_files(ctx: RunContextWrapper[Any], directory: str = ".") -> str:
 
     for path in sorted(target.iterdir()):
         kind = "dir" if path.is_dir() else "file"
-        rel = path.relative_to(PROJECT_ROOT)
+        rel = path.relative_to(base_path)
         lines.append(f'{kind}: {rel}')
 
     return "\n".join(lines)
 
 @function_tool
-def read_file(ctx: RunContextWrapper[Any], file_path: str) -> str:
+def read_file(ctx: RunContextWrapper[ProjectContext], file_path: str) -> str:
     """
     Read a file from the project directory
     
     Args:
         file_path: Path to the file inside the project folder.
     """
-    target = safe_path(file_path)
+    base_path = ctx.context.project_root
+    target = safe_path(base_path, file_path)
 
     if not target.exists():
         return f"File '{file_path}' does not exist."
@@ -65,32 +77,35 @@ def read_file(ctx: RunContextWrapper[Any], file_path: str) -> str:
 @function_tool
 # TODO: note to self, do NOT mindlessly push full excel files to llm-api, it will cost an
 # arm and a leg.
-def read_excel_file(ctx: RunContextWrapper[Any], file_path:str) -> str:
+def read_excel_file(ctx: RunContextWrapper[ProjectContext], file_path:str) -> list[dict]:
     """
     Read an Excel file from the project directory and return its contents as a string.
     
     Args:
         file_path: Path to the Excel file inside the project folder.
     """
+    base_path = ctx.context.project_root
     try:
-        file = pd.read_excel(safe_path(file_path), sheet_name='Eritelysivu')
+        file = pd.read_excel(safe_path(base_path, file_path), sheet_name='Eritelysivu')
     except Exception as e:
         return f"Error reading Excel file '{file_path}': {str(e)}"
     return file.to_dict(orient='records')
 
 
 @function_tool
-def search_for_file(ctx: RunContextWrapper[Any], filename: str) -> str:
+def search_for_file(ctx: RunContextWrapper[ProjectContext], filename: str) -> str:
     """
     Search for a file by name in the project directory and its subdirectories.
     
     Args:
         filename: Name of the file to search for.
     """
+    base_path = ctx.context.project_root
     matches = []
-    for path in PROJECT_ROOT.rglob(filename):
+
+    for path in base_path.rglob(filename):
         if path.is_file():
-            rel = path.relative_to(PROJECT_ROOT)
+            rel = path.relative_to(base_path)
             matches.append(str(rel))
     
     if not matches:
@@ -110,7 +125,11 @@ agent = Agent(
 
 async def main() -> None:
     user_input = input("You: ")
-    result = await Runner.run(agent, user_input)
+    context = ProjectContext(
+        project_root=Path(__file__).resolve().parent / "projektit"
+    )
+
+    result = await Runner.run(agent, user_input, context=context)
 
     print("\nAgent: ")
     print(result.final_output)

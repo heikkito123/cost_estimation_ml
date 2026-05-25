@@ -18,3 +18,11 @@ Future hopes and dreams:
 - As clawdBot (open claw) showed, a powerful LLM-assistant in the datapipeline and backend (isolated via service layer) would benefit users tremendously
 - A domain as slow and old as construction would benefit from data utilization in a "white-collar" sense, and in my personal point of view is not being utilized nearly to its full potential. This view is shared by all affiliates i have ever worked with, from construction site workers to managers, to consultants and owners to real estate development leaders.
 - Just by automating repetitive knowledge-work would benefit the whole industry as a whole, and utilizing data would greatly benefit each sub-domain end-to-end
+
+Files:
+This project folder is somewhat arbitrarily structured since most of the data is "proprietary", i.e. small company made-for excel sheets for cost  estimation, and randomly selected documentation from different projects. As such, most of the notebooks are as more of an exploratory form to harvest data from semi-structured and inconsistent files. However, a brief overview:
+
+- reno_parser_featuret.ipynb: data parsing from one affiliate cost estimation excle files.
+- data_esikasittely.ipynb: data harvesting and munging, exploring what data is and how it can be converted to more useful form. Some visualization, some parsing, some slicing etc. to be forwarded to model testing.
+- mallien_testit.ipynb: model testing notebook. Some general regression model briefing and testing, mainly to (1) see if the data is in a form that a model can accept it (2) compare models in high level (3) see if the models produce useful signals.
+- agent_file_demo.py: a very short testing on chatGPT agents SDK framework and how it could be useful as an agentic assistant
