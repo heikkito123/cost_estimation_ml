@@ -2,12 +2,14 @@
 
 Demoing cost estimation ml-model and reflecting different use cases and different perspectives and tools on construction project data. Core problem is inconsistent and unstandardized way of writing documentation for projects in general.
 
+---
+
 WIP:
 Currently exploring local llm options for larger text-file parsing and summarization. Biggest problem to tackle is the small context window vs. large text file contents. Bouncing between trying to parse files via fixed engine and just piping the whole (initially parsed) file to a local sub-agent for parsing, and creating a tooling architecture that exposes only key data to a frontier level paid API. Interesting options not yet implemented e.g.
 
-- data embeddings and semantic search, colpali / byaldi recommended, VLM (visual language model)
 - smaller dataset exposition to a paid frontier level LLM API
 - routing large datasets to small context windows
+- sub-agent parsing seems to work fine, but it's too slow for interactive use; this is probably not a poblem if the work is offloaded to idle time and data parsing is handled outside of
 
 ---
 
@@ -35,3 +37,7 @@ This project folder is somewhat arbitrarily structured since most of the data is
 - data_esikasittely.ipynb: data harvesting and munging, exploring what data is and how it can be converted to more useful form. Some visualization, some parsing, some slicing etc. to be forwarded to model testing.
 - mallien_testit.ipynb: model testing notebook. Some general regression model briefing and testing, mainly to (1) see if the data is in a form that a model can accept it (2) compare models in high level (3) see if the models produce useful signals.
 - agent_file_demo.py: a very short testing on chatGPT agents SDK framework and how it could be useful as an agentic assistant
+
+Some conlusions:
+
+- data embeddings and semantic search, colpali / byaldi recommended, VLM (visual language model) didn't work, the model is too large for current hardware

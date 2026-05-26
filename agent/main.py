@@ -5,7 +5,7 @@ import ollama
 
 from context import AgentContext
 from agent import SYSTEM_PROMPT
-from tools import TOOLS, list_files, read_pdf_file, read_text_file, find_file_or_dir
+from tools import TOOLS, list_files, read_pdf_file, read_text_file, find_file_or_dir, parse_large_pdf_file
 
 MODEL = "gemma4:e4b"
 
@@ -14,6 +14,7 @@ TOOL_REGISTRY = {
     "read_text_file": read_text_file,
     "read_pdf_file": read_pdf_file,
     "find_file_or_dir": find_file_or_dir,
+    "parse_large_pdf_file": parse_large_pdf_file,
 }
 
 def run_agent(ctx: AgentContext, user_message: str) -> str:
@@ -29,7 +30,7 @@ def run_agent(ctx: AgentContext, user_message: str) -> str:
             tools=TOOLS,
             stream=True,
             options={
-                "num_ctx": 131000,
+                "num_ctx": 32000,
             },
         )
 
@@ -54,6 +55,8 @@ def run_agent(ctx: AgentContext, user_message: str) -> str:
         messages.append(message)
 
         tool_calls = message.get("tool_calls", [])
+
+        print(tool_calls)
 
         if not tool_calls:
             return message.get("content", "")

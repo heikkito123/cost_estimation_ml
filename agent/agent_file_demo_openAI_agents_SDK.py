@@ -11,7 +11,8 @@ from agents import Agent, Runner, RunContextWrapper, function_tool
 General testing on openAI agents SDK.
 
 Not really viable on small company context, technical and financial intercept
-is fair when tools are refined though.
+is fair when tools are refined though. None the less, with decent data-architecture
+and tool design this is very useful.
 """
 
 @dataclass

@@ -5,14 +5,22 @@ from typing import get_type_hints
 import inspect
 import unicodedata
 import tiktoken
+import ollama
+import tempfile
+import time
+
+from agent import CLEANER_SYSTEM_PROMPT
 
 from utils import (normalize_filename, 
                    repair_mojibake, 
                    find_allowed_match, 
                    resolve_allowed_path,
                    clean_text,
-                   chunk_text,
-                   write_chunks_to_file)
+                   chunk_text_util,
+                   write_chunks_to_file,
+                   read_pdf_file_util,
+                   tail_coverage_score,
+                   )
 
 def list_files(ctx: AgentContext, directory: str) -> str:
     """
@@ -62,7 +70,7 @@ def read_text_file(ctx: AgentContext, file_path: str) -> str:
 
     return text[:10000]
 
-def read_pdf_file(ctx: AgentContext, file_path: str) -> tuple:
+def read_pdf_file(ctx: AgentContext, file_path: str) -> str:
     """
     Read pdf-file from allowed directory. If file size is too large, it will be chunked to
     chunk#_temp.txt file.
@@ -81,16 +89,13 @@ def read_pdf_file(ctx: AgentContext, file_path: str) -> tuple:
     if not path.exists():
         return f"File '{path}' does not exist."
     
-    doc = pymupdf.open(path)
-    text = [p.get_text() for p in doc]
-    text = "\n".join(text)
-    text = clean_text(text)
+    text = read_pdf_file_util(path)
 
-    if len(chunks := chunk_text(text)) > 1:
-        f_names = write_chunks_to_file(chunks)
-        f_names = ','.join(f_names)
+    if len(chunks := chunk_text_util(text)) > 1:
+        # f_names = write_chunks_to_file(chunks)
+        # f_names = ','.join(f_names)
 
-        return f"Pdf-file was too large to read, it was split into chunks to {f_names}"
+        return f"Pdf-file was too large to read, use parse_large_pdf_file tool."
 
     return text
 
@@ -117,6 +122,94 @@ def find_file_or_dir(ctx: AgentContext, dir_file: str) -> str:
         return f"No matching files or directories found for: {dir_file}"
 
     return "\n".join(str(item) for item in results)
+
+def parse_large_pdf_file(ctx: AgentContext, input_file_path: str | Path, model: str="gemma4:e4b") -> str:
+
+    path = resolve_allowed_path(ctx, input_file_path)
+
+    if not ctx.is_allowed_path(path):
+        return f"Filepath '{path}' is not in allowed dirs."
+    
+    if not path.exists():
+        return f"File '{path}' does not exist."
+    
+    text = read_pdf_file_util(path)
+    chunks = chunk_text_util(text)
+    total = len(chunks)
+    output_path = Path(__file__).with_name("parsed_agent_output.txt")
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+        output_files = []
+
+        for i, (chunk_name, chunk_text) in enumerate(chunks.items(), start=1):
+            start = time.perf_counter()
+            print(f'Parsing {chunk_name} ({i} / {total})')
+            
+            messages = [
+                {
+                    "role": "system",
+                    "content": CLEANER_SYSTEM_PROMPT,
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+                    Clean this extracted Finnish construction document chunk.
+
+                    Chunk: {chunk_name}
+                    Progress: {i}/{total}
+
+                    Rules:
+                    - Preserve meaningful technical content.
+                    - Keep section numbers and headings.
+                    - Remove page headers, footers, table-of-contents noise, and duplicated boilerplate.
+                    - Do not summarize too aggressively.
+                    - Do not invent.
+                    - If uncertain, keep the text.
+
+                    RAW_TEXT:
+                    {chunk_text}
+                    """,
+                },
+            ]
+            response = ollama.chat(
+                model=model,
+                messages=messages,
+                options={
+                    "num_ctx": 8000,
+                    "num_predict": 1500,
+                    "temperature": 0.1,
+                },
+                keep_alive="30m",
+            )
+
+            parsed_text = response["message"]["content"].strip()
+
+            if not parsed_text or tail_coverage_score(chunk_text, parsed_text) < 0.35:
+                parsed_text = chunk_text
+
+            out_path = temp_dir / f"{chunk_name}_parsed.md"
+            out_path.write_text(
+                f"<!-- {chunk_name} ({i}/{total}) -->\n\n{parsed_text}\n",
+                encoding="utf-8",
+            )
+
+            output_files.append(out_path)
+            print(f'Time parsing chunk: {time.perf_counter() - start:.1f}s')
+
+        combined = []
+        for file_path in output_files:
+            combined.append(file_path.read_text(encoding="utf-8"))
+
+        final_parsed_text = "\n".join(combined)
+        
+        output_path.write_text(final_parsed_text, encoding="utf-8")
+
+    return f"File parsed succesfully: {output_path}"
+
+
+
+
     
 def python_type_to_json(py_type):
     if py_type == "string":
@@ -170,4 +263,5 @@ TOOLS = [
     tool_schema(read_pdf_file),
     tool_schema(read_text_file),
     tool_schema(find_file_or_dir),
+    tool_schema(parse_large_pdf_file),
 ]
