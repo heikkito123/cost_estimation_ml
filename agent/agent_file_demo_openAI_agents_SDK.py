@@ -10,9 +10,11 @@ from agents import Agent, Runner, RunContextWrapper, function_tool
 """
 General testing on openAI agents SDK.
 
-Not really viable on small company context, technical and financial intercept
-is fair when tools are refined though. None the less, with decent data-architecture
-and tool design this is very useful.
+Not really viable on small company context as is, this requires a more refined tool-design.
+This is very interesting though, because in small-to-midsize-company setting, you could
+possibly reduce repetitive work per person and per every-day repetitive general work,
+in which case costs of up to hundreds or even a couple thousands of €uros per moth would 
+be justified.
 """
 
 @dataclass

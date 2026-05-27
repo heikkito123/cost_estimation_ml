@@ -1,6 +1,10 @@
 # cost_estimation_ml
 
-Demoing cost estimation ml-model and reflecting different use cases and different perspectives and tools on construction project data. Core problem is inconsistent and unstandardized way of writing documentation for projects in general.
+Demoing cost estimation ml-model, local- and api-llm's and reflecting different use cases and different perspectives and tools on construction project data. Core problem is inconsistent and unstandardized way of writing documentation for projects in general, and limited time of course.
+
+All in all this has proven to be a very interesting project. When combined with the project management system and the idea of well-designed database- and data-architecture to a pipeline, and agentic llm serving between APIs and personnel, there seems to be all the tools necessary to create something wildly useful - not unlike ClawdBot - for organizations (and people in general) of all sizes.
+
+My vision and view has moved on to general open source system designed especially to small-to-midsize settings. The pain of my own traversals as a construction entrepreneur was the sparking light of this project, and of the project management system, and i'm hoping to continue to work on this project in the future. If you stumble upon this and read through up to this point, i'd be glad of any opinions and help.
 
 ---
 
@@ -8,8 +12,9 @@ WIP:
 Currently exploring local llm options for larger text-file parsing and summarization. Biggest problem to tackle is the small context window vs. large text file contents. Bouncing between trying to parse files via fixed engine and just piping the whole (initially parsed) file to a local sub-agent for parsing, and creating a tooling architecture that exposes only key data to a frontier level paid API. Interesting options not yet implemented e.g.
 
 - smaller dataset exposition to a paid frontier level LLM API
+- better designed toolsets for api-llm's to reduce token costs
 - routing large datasets to small context windows
-- sub-agent parsing seems to work fine, but it's too slow for interactive use; this is probably not a poblem if the work is offloaded to idle time and data parsing is handled outside of
+- sub-agent parsing seems to work fine, but it's too slow for interactive use; this is probably not a poblem if the work is offloaded to idle time and data parsing is handled outside of office-hours
 
 ---
 
